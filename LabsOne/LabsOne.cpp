@@ -1,4 +1,5 @@
-﻿#include <iostream>
+﻿//наша первая лабораторная работа по численным методам
+#include <iostream>
 #include <cmath>
 #include <vector>
 #include <functional>
