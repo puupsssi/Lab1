@@ -127,7 +127,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="All functions for system.cpp" />
     <ClCompile Include="LabsOne.cpp" />
+    <ClCompile Include="All functions for equation.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Names of Functions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
