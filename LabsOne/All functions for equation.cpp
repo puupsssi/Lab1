@@ -45,7 +45,7 @@ int check_the_point(double vn_plus_1, double v2n, double* h, double epsilon) {
 }
 // Функция для метода Рунге-Кутта 4-го порядка
 vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double x0, double v0,//передаю функцию, которая отвечает за правую часть
-    double h, int n_steps, double epsilon, int need_epsilon, double right_boarder, double epsilon_boarder,
+    double h, int n_steps, double epsilon, int need_epsilon, double right_border, double epsilon_border,
     vector<pair<double, double>>* changes_step, vector<pair<double, double>>* test_task) {
     double xn = x0; //текущая точка
     double vn = v0; //текущее значение
@@ -60,62 +60,74 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
 
     // Вектор для хранения результатов
     vector<vector<double>> numerical_solution;
-
+    test_task->push_back({ u_test(xn, v0), abs(u_test(xn, v0) - vn) });
     if (need_epsilon) { // с контролем локальной погрешности
         vector<double> new_raw = { xn, vn, NAN, NAN, NAN,hn };//положили первую строку сразу
         numerical_solution.push_back(new_raw);
         for (int i = 1; i < n_steps + 1; i++) {
             //добавить выход за границу
-            while (1) {//пока не найдем хорошую точку
-                c1 = 0, c2 = 0;
-                new_point = step_of_the_method_for_equation(f, xn, vn, hn); //поcчитали новую точку с обычным шагом
+            while (xn < right_border && i < n_steps)
+            {
+                while (1) {//пока не найдем хорошую точку
+                    c1 = 0, c2 = 0;
+                    new_point = step_of_the_method_for_equation(f, xn, vn, hn); //поcчитали новую точку с обычным шагом
 
-                half_step_point = step_of_the_method_for_equation(f, xn, vn, hn / 2.0);//считаем точку с половинным шагом
-                new_point_with_half_step = step_of_the_method_for_equation(f, half_step_point.first, half_step_point.second, hn / 2.0);
-                v2n = new_point_with_half_step.second;
+                    half_step_point = step_of_the_method_for_equation(f, xn, vn, hn / 2.0);//считаем точку с половинным шагом
+                    new_point_with_half_step = step_of_the_method_for_equation(f, half_step_point.first, half_step_point.second, hn / 2.0);
+                    v2n = new_point_with_half_step.second;
 
-                int olp = check_the_point(new_point.second, new_point_with_half_step.second, &hn, epsilon); // 1 - точка хорошая, шаг тот же,
-                                                                                                            //2 - точка хорошая, шаг в два раза больше,
-                                                                                                            //0 - точка плохая, шаг в два раза меньше
-                if (olp == 2) {//счетчик удвоения шага
-                    c2 += 1;
-                }
-                else if (olp == 0) {//счетчик деления шага на два
-                    c1 += 1;
-                }
-
-                if (olp) {//если точка хорошая
-                    xn = new_point.first;
-                    vn = new_point.second;//обновляем точку
-                    vector<double> new_raw = { xn, vn, v2n, (vn - v2n), calculate_S(vn,v2n,epsilon),hn };//наш результат за этот шаг
-                    numerical_solution.push_back(new_raw);
-                    if (is_task_test) {//для тестовой задачи еще аналитическое решение
-                        test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });
+                    int olp = check_the_point(new_point.second, new_point_with_half_step.second, &hn, epsilon); // 1 - точка хорошая, шаг тот же,
+                    //2 - точка хорошая, шаг в два раза больше,
+                    //0 - точка плохая, шаг в два раза меньше
+                    if (olp == 2) {//счетчик удвоения шага
+                        c2 += 1;
                     }
-                    break;
+                    else if (olp == 0) {//счетчик деления шага на два
+                        c1 += 1;
+                        changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
+                    }
+
+                    if (olp) {//если точка хорошая
+                        xn = new_point.first;
+                        vn = new_point.second;//обновляем точку
+                        vector<double> new_raw = { xn, vn, v2n, (vn - v2n), calculate_S(vn,v2n,epsilon),hn };//наш результат за этот шаг
+                        numerical_solution.push_back(new_raw);
+                        if (is_task_test) {//для тестовой задачи еще аналитическое решение
+                            test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });
+                        }
+                        break;
+                    }
                 }
+                changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
+                i++;
             }
-            changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
+            n_steps = i;
         }
     }
     else { //без контроля локальной погрешности
         vector<double> new_raw = { xn, vn, hn };//положили первую строку сразу
         numerical_solution.push_back(new_raw);
         for (int i = 0; i < n_steps; i++) {
-            //добавить выход за границу
-            new_point = step_of_the_method_for_equation(f, xn, vn, hn);
-            xn = new_point.first;
-            vn = new_point.second;
-            if (is_task_test) {
-                vector<double> new_raw = { xn, vn, hn };//наш результат за этот шаг
-                numerical_solution.push_back(new_raw);
-                test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });
+            while (xn < right_border&&i<n_steps)
+            {
+                //добавить выход за границу
+                new_point = step_of_the_method_for_equation(f, xn, vn, hn);
+                xn = new_point.first;
+                vn = new_point.second;
+                if (is_task_test) {
+                    new_raw = { xn, vn, hn };//наш результат за этот шаг
+                    numerical_solution.push_back(new_raw);
+                    test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });
+                }
+                else {
+                    vector<double> new_raw = { xn, vn, hn };//наш результат за этот шаг
+                    numerical_solution.push_back(new_raw);
+                }
+                i++;
             }
-            else {
-                vector<double> new_raw = { xn, vn, hn };//наш результат за этот шаг
-                numerical_solution.push_back(new_raw);
-            }
+            n_steps=i;
         }
+        
     }
     return numerical_solution;
 }
