@@ -78,63 +78,68 @@ vector<vector<double>> runge_kutta_4th_order_for_system(pair<double, double>(*f)
     if (need_epsilon) { // с контролем локальной погрешности
         vector<double> new_raw = { xn, v_1n,v_2n, NAN, NAN, NAN,NAN,NAN,hn };//положили первую строку сразу
         numerical_solution.push_back(new_raw);
-        for (int i = 1; i < n_steps + 1; i++) {
-            while (xn < right_border && i < n_steps)
-            {
-                //добавить выход за границу
-                while (1) {//пока не найдем хорошую точку
-                    c1 = 0, c2 = 0;
-                    new_point = step_of_the_method_for_the_system(f, xn, v_1n, v_2n, hn, a, b); //поcчитали новую точку с обычным шагом
+        for (int i = 1; xn < right_border && i < n_steps + 1; i++) {
+            //добавить выход за границу
+            while (1) {//пока не найдем хорошую точку
+                c1 = 0, c2 = 0;
+                new_point = step_of_the_method_for_the_system(f, xn, v_1n, v_2n, hn, a, b); //поcчитали новую точку с обычным шагом
 
-                    half_step_point = step_of_the_method_for_the_system(f, xn, v_1n, v_2n, hn / 2.0, a, b);//считаем точку с половинным шагом
-                    new_point_with_half_step = step_of_the_method_for_the_system(f, get<0>(half_step_point), get<1>(half_step_point), get<2>(half_step_point), hn / 2.0, a, b);
-                    v_12n = get<1>(new_point_with_half_step);
-                    v_22n = get<2>(new_point_with_half_step);
+                half_step_point = step_of_the_method_for_the_system(f, xn, v_1n, v_2n, hn / 2.0, a, b);//считаем точку с половинным шагом
+                new_point_with_half_step = step_of_the_method_for_the_system(f, get<0>(half_step_point), get<1>(half_step_point), get<2>(half_step_point), hn / 2.0, a, b);
+                v_12n = get<1>(new_point_with_half_step);
+                v_22n = get<2>(new_point_with_half_step);
 
-                    int olp = check_the_point_for_system(get<1>(new_point), get<1>(new_point_with_half_step),
-                        get<2>(new_point), get<2>(new_point_with_half_step), &hn, epsilon);
-                    // 1 - точка хорошая, шаг тот же,
-                    //2 - точка хорошая, шаг в два раза больше,
-                    //0 - точка плохая, шаг в два раза меньше
-                    if (olp == 2) {//счетчик удвоения шага
-                        c2 += 1;
-                    }
-                    else if (olp == 0) {//счетчик деления шага на два
-                        c1 += 1;
-                        changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
-                    }
-
-                    if (olp) {//если точка хорошая
-                        xn = get<0>(new_point);
-                        v_1n = get<1>(new_point);//обновляем точку
-                        v_2n = get<2>(new_point);//обновляем точку
-                        vector<double> new_raw = { xn, v_1n,v_2n, v_12n,v_22n, (v_1n - v_12n),(v_2n - v_22n),calculate_S_for_system(v_1n,v_1n,v_12n,v_22n,epsilon),hn };//наш результат за этот шаг
-                        numerical_solution.push_back(new_raw);
-                        break;
-                    }
+                int olp = check_the_point_for_system(get<1>(new_point), get<1>(new_point_with_half_step),
+                    get<2>(new_point), get<2>(new_point_with_half_step), &hn, epsilon);
+                // 1 - точка хорошая, шаг тот же,
+                //2 - точка хорошая, шаг в два раза больше,
+                //0 - точка плохая, шаг в два раза меньше
+                if (olp == 2) {//счетчик удвоения шага
+                    c2 += 1;
                 }
-                changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
-                i++;
+                else if (olp == 0) {//счетчик деления шага на два
+                    c1 += 1;
+                    changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
+                }
+
+                if (olp) {//если точка хорошая
+                    xn = get<0>(new_point);
+                    v_1n = get<1>(new_point);//обновляем точку
+                    v_2n = get<2>(new_point);//обновляем точку
+                    vector<double> new_raw = { xn, v_1n,v_2n, v_12n,v_22n, (v_1n - v_12n),(v_2n - v_22n),calculate_S_for_system(v_1n,v_1n,v_12n,v_22n,epsilon),hn };//наш результат за этот шаг
+                    numerical_solution.push_back(new_raw);
+                    break;
+                }
             }
-            n_steps = i;
+            changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
         }
     }
     else { //без контроля локальной погрешности
         vector<double> new_raw = { xn, v_1n,v_2n, hn };//положили первую строку сразу
         numerical_solution.push_back(new_raw);
-        for (int i = 0; i < n_steps; i++) {
-            while (xn < right_border && i < n_steps)
+        for (int i = 0;xn < right_border && i < n_steps; i++) {
+            //добавить выход за границу
+            new_point = step_of_the_method_for_the_system(f, xn, v_1n, v_2n, hn, a, b);
+            xn = get<0>(new_point);
+            v_1n = get<1>(new_point);//обновляем точку
+            v_2n = get<2>(new_point);//обновляем точку
+            vector<double> new_raw = { xn, v_1n,v_2n, hn };//наш результат за этот шаг
+            numerical_solution.push_back(new_raw);
+            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border)
             {
-                //добавить выход за границу
+                cout << "Досчитали до границы, последние граничнаые точки имеют координаты: " << xn << " , " << v_1n << "  ;  " << xn << " , " << v_2n << endl << endl;
+            }
+            else if (xn + hn > right_border + epsilon_border)
+            {
+                hn = right_border + epsilon_border - xn;
                 new_point = step_of_the_method_for_the_system(f, xn, v_1n, v_2n, hn, a, b);
                 xn = get<0>(new_point);
                 v_1n = get<1>(new_point);//обновляем точку
                 v_2n = get<2>(new_point);//обновляем точку
                 vector<double> new_raw = { xn, v_1n,v_2n, hn };//наш результат за этот шаг
                 numerical_solution.push_back(new_raw);
-                i++;
+                break;
             }
-            n_steps = i;
         }
     }
     return numerical_solution;
