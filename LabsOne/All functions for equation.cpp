@@ -30,10 +30,10 @@ double calculate_S(double vn_plus_1, double v2n, double epsilon) {
 }
 int check_the_point(double vn_plus_1, double v2n, double* h, double epsilon) {
     double S = calculate_S(vn_plus_1, v2n, epsilon);
-    if ((epsilon / 15.0) <= S && S < epsilon) { //хорошая точка
+    if ((epsilon / 32.0) <= S && S < epsilon) { //хорошая точка
         return 1; //значит, что точка хорошая и мы продолжаем счет
     }
-    if (S < (epsilon / 15.0)) {
+    if (S < (epsilon / 32.0)) {
         *h = *h * 2;
         return 2; //аналогично с предыдущим случаем, только еще поменяли шаг
     }
@@ -64,10 +64,9 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
     if (need_epsilon) { // с контролем локальной погрешности
         vector<double> new_raw = { xn, vn, NAN, NAN, NAN,hn };//положили первую строку сразу
         numerical_solution.push_back(new_raw);
-        for (int i = 1; xn < right_border && i < n_steps + 1; i++) {
-            //добавить выход за границу
+        for (int i = 1; i < n_steps; i++) {
+            c1 = 0, c2 = 0;
             while (1) {//пока не найдем хорошую точку
-                c1 = 0, c2 = 0;
                 new_point = step_of_the_method_for_equation(f, xn, vn, hn); //поcчитали новую точку с обычным шагом
 
                 half_step_point = step_of_the_method_for_equation(f, xn, vn, hn / 2.0);//считаем точку с половинным шагом
@@ -82,9 +81,7 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
                 }
                 else if (olp == 0) {//счетчик деления шага на два
                     c1 += 1;
-                    changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага
                 }
-
                 if (olp) {//если точка хорошая
                     xn = new_point.first;
                     vn = new_point.second;//обновляем точку
@@ -97,24 +94,30 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
                 }
             }
             changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага 
-            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border)
-            {
-                cout << "Досчитали до границы, последняя граничная точка имеет координаты: " << xn << " , " << vn << endl << endl;
+            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border) { // если мы уже находимся в эпсилон-окрестности правой границы, 
+                                                                                              //то это была последняя точка и мы завершаем счет 
+                break;
             }
-            else if (xn + hn > right_border + epsilon_border)
-            {
-                hn = right_border + epsilon_border - xn;
+            else if (xn + hn > right_border + epsilon_border) { //если следующий шаг выводит нас из окрестности, то считаем последнюю точку на границе и завершаем счет
+                i++;
+                hn = right_border - xn;
                 new_point = step_of_the_method_for_equation(f, xn, vn, hn);
                 xn = new_point.first;
                 vn = new_point.second;
+
+                half_step_point = step_of_the_method_for_equation(f, xn, vn, hn / 2.0);//считаем точку с половинным шагом
+                new_point_with_half_step = step_of_the_method_for_equation(f, half_step_point.first, half_step_point.second, hn / 2.0);
+                v2n = new_point_with_half_step.second;
+
+                changes_step->push_back({ (*changes_step)[i - 1].first,(*changes_step)[i - 1].second});
                 vector<double> new_raw = { xn, vn, v2n, (vn - v2n), calculate_S(vn,v2n,epsilon),hn };//наш результат за этот шаг
+
                 numerical_solution.push_back(new_raw);
                 if (is_task_test) {//для тестовой задачи еще аналитическое решение
                     test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });
                 }
                 break;
             }
-            changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага 
         }
     }
     else { //без контроля локальной погрешности
@@ -133,13 +136,12 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
                 vector<double> new_raw = { xn, vn, hn };//наш результат за этот шаг
                 numerical_solution.push_back(new_raw);
             }
-            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border)
-            {
-                cout << "Досчитали до границы, последняя граничная точка имеет координаты: " << xn << " , " << vn << endl<<endl;
+            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border) { // если мы уже находимся в эпсилон-окрестности правой границы, 
+                                                                                              //то это была последняя точка и мы завершаем счет
+                break;
             }
-            else if (xn + hn > right_border + epsilon_border)
-            {
-                hn = right_border + epsilon_border - xn;
+            else if (xn + hn > right_border + epsilon_border) { //если следующий шаг выводит нас из окрестности, то считаем последнюю точку на границе и завершаем счет
+                hn = right_border - xn;
                 new_point = step_of_the_method_for_equation(f, xn, vn, hn);
                 xn = new_point.first;
                 vn = new_point.second;

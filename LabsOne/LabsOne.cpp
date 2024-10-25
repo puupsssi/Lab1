@@ -63,7 +63,7 @@ int main() {
         //Вызываем метод Рунге-Кутта
         result = runge_kutta_4th_order(f0, x0, v0, h, n_steps, epsilon, need_epsilon,right_border,epsilon_border, &changes_of_the_step, &for_test_task);
         n_steps = size(result);
-        if (f0 == test_f && need_epsilon == 0) {
+        if (need_epsilon == 0) {
             cout << setw(5) << "i" << setw(15) << "xn" << setw(15) << "vn" << setw(15) << "hn" << " " << setw(19) << "un" << setw(19) << "un - vn" << endl;
             for (int i = 0; i < n_steps; i++) {
                 cout << setw(5) << i;
