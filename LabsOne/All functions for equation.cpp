@@ -94,28 +94,40 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
                 }
             }
             changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага 
-            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border) { // если мы уже находимся в эпсилон-окрестности правой границы, 
-                                                                                              //то это была последняя точка и мы завершаем счет 
-                break;
-            }
-            else if (xn + hn > right_border + epsilon_border) { //если следующий шаг выводит нас из окрестности, то считаем последнюю точку на границе и завершаем счет
+            if (xn + hn > right_border + epsilon_border) { //если следующий шаг выводит нас из окрестности, то считаем последнюю точку на границе и завершаем счет
                 i++;
                 hn = right_border - xn;
-                new_point = step_of_the_method_for_equation(f, xn, vn, hn);
-                xn = new_point.first;
-                vn = new_point.second;
+                while (1) {//пока не найдем хорошую точку
+                    new_point = step_of_the_method_for_equation(f, xn, vn, hn); //поcчитали новую точку с обычным шагом
 
-                half_step_point = step_of_the_method_for_equation(f, xn, vn, hn / 2.0);//считаем точку с половинным шагом
-                new_point_with_half_step = step_of_the_method_for_equation(f, half_step_point.first, half_step_point.second, hn / 2.0);
-                v2n = new_point_with_half_step.second;
+                    half_step_point = step_of_the_method_for_equation(f, xn, vn, hn / 2.0);//считаем точку с половинным шагом
+                    new_point_with_half_step = step_of_the_method_for_equation(f, half_step_point.first, half_step_point.second, hn / 2.0);
+                    v2n = new_point_with_half_step.second;
 
-                changes_step->push_back({ (*changes_step)[i - 1].first,(*changes_step)[i - 1].second});
-                vector<double> new_raw = { xn, vn, v2n, (vn - v2n), calculate_S(vn,v2n,epsilon),hn };//наш результат за этот шаг
-
-                numerical_solution.push_back(new_raw);
-                if (is_task_test) {//для тестовой задачи еще аналитическое решение
-                    test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });
+                    int olp = check_the_point(new_point.second, new_point_with_half_step.second, &hn, epsilon); // 1 - точка хорошая, шаг тот же,
+                    //2 - точка хорошая, шаг в два раза больше,
+                    //0 - точка плохая, шаг в два раза меньше
+                    if (olp == 2) {//счетчик удвоения шага
+                        c2 += 1;
+                    }
+                    else if (olp == 0) {//счетчик деления шага на два
+                        c1 += 1;
+                    }
+                    if (olp) {//если точка хорошая
+                        xn = new_point.first;
+                        vn = new_point.second;//обновляем точку
+                        vector<double> new_raw = { xn, vn, v2n, (vn - v2n), calculate_S(vn,v2n,epsilon),hn };//наш результат за этот шаг
+                        numerical_solution.push_back(new_raw);
+                        if (is_task_test) {//для тестовой задачи еще аналитическое решение
+                            test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });
+                        }
+                        break;
+                    }
                 }
+                changes_step->push_back({ (*changes_step)[i - 1].first,(*changes_step)[i - 1].second});
+            }
+            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border) { // если мы уже находимся в эпсилон-окрестности правой границы, 
+                                                                                              //то это была последняя точка и мы завершаем счет 
                 break;
             }
         }
