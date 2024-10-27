@@ -136,6 +136,7 @@ vector<vector<double>> runge_kutta_4th_order_for_system(pair<double, double>(*f)
                     //0 - точка плохая, шаг в два раза меньше
                     if (olp == 2) {//счетчик удвоения шага
                         c2 += 1;
+                        hn /= 2;
                     }
                     else if (olp == 0) {//счетчик деления шага на два
                         c1 += 1;
