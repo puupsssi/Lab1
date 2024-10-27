@@ -7,8 +7,8 @@ int main() {
     int p = 0;
     // Начальные условия
     double x0, right_border;  // [x(0), right_border]
-    double v0,v_10,v_20;// v(0)
-    double A=0, B=0;//параметры для второй задачи
+    double v0, v_10, v_20;// v(0)
+    double A = 0, B = 0;//параметры для второй задачи
     int C1 = 0, C2 = 0;
     vector<pair<double, double>> changes_of_the_step = { {C1,C2} };//изменения шага
     vector<pair<double, double>>for_test_task;//для тестовой задачи: пары(точное значение функции u(x) тестовой задачи, разница значений точного и численного решений в данной точке)
@@ -22,6 +22,8 @@ int main() {
     double(*f0)(double, double);
     double(*f1)(double, double);
     pair<double, double>(*f2)(double, double, double, double, double);
+    int doublingStep, dividingStep;
+    double min_step, max_step;
 
     cout << "Какую задачу вы хотите решить?\n0.Тестовая\n1.Первая\n2.Вторая\nВведите номер: ";
     cin >> p;
@@ -61,8 +63,11 @@ int main() {
         }
         f0 = test_f;
         //Вызываем метод Рунге-Кутта
-        result = runge_kutta_4th_order(f0, x0, v0, h, n_steps, epsilon, need_epsilon,right_border,epsilon_border, &changes_of_the_step, &for_test_task);
+        result = runge_kutta_4th_order(f0, x0, v0, h, n_steps, epsilon, need_epsilon, right_border, epsilon_border, &changes_of_the_step, &for_test_task);
         n_steps = size(result);
+        doublingStep = changes_of_the_step[n_steps - 1].second;
+        dividingStep = changes_of_the_step[n_steps - 1].first;
+        min_step = 100; max_step = 0;
         if (need_epsilon == 0) {
             cout << setw(5) << "i" << setw(15) << "xn" << setw(15) << "vn" << setw(15) << "hn" << " " << setw(19) << "un" << setw(19) << "un - vn" << endl;
             for (int i = 0; i < n_steps; i++) {
@@ -84,7 +89,12 @@ int main() {
                 cout << setw(5) << changes_of_the_step[i].first << setw(5) << changes_of_the_step[i].second;
                 cout << setw(15) << for_test_task[i].first << " " << setw(10) << for_test_task[i].second;
                 cout << endl;
+
+                if (result[i][5] > max_step) { max_step = result[i][5]; }
+                if (result[i][5] < min_step) { min_step = result[i][5]; }
             }
+            cout << "Количество шагов " << n_steps << "\nКоличество удвоений шага " << doublingStep << "\nКоличество делений шага ";
+            cout << dividingStep << "\nМинимальный шаг " << min_step << "\nМаксимальный шаг " << max_step;
         }
         break; // завершение выполнения блока case
     case 1:
@@ -123,7 +133,10 @@ int main() {
         //Вызываем метод Рунге-Кутта
         result = runge_kutta_4th_order(f1, x0, v0, h, n_steps, epsilon, need_epsilon, right_border, epsilon_border, &changes_of_the_step, &for_test_task);
         n_steps = size(result);
-        if (f1 ==f_first_task && need_epsilon != 0) {
+        doublingStep = changes_of_the_step[n_steps - 1].second;
+        dividingStep = changes_of_the_step[n_steps - 1].first;
+        min_step = 100; max_step = 0;
+        if (f1 == f_first_task && need_epsilon != 0) {
             cout << setw(5) << "i" << setw(15) << "xn" << setw(15) << "vn" << setw(15) << "v2n" << setw(15) << "vn - v2n" << setw(15) << "S" << setw(15) << "hn" << setw(7) << "c1" << setw(7) << "c2" << endl;
             for (int i = 0; i < n_steps; i++) {
                 cout << setw(5) << i;
@@ -132,9 +145,13 @@ int main() {
                 }
                 cout << setw(7) << changes_of_the_step[i].first << setw(7) << changes_of_the_step[i].second;
                 cout << endl;
+                if (result[i][5] > max_step) { max_step = result[i][5]; }
+                if (result[i][5] < min_step) { min_step = result[i][5]; }
             }
+            cout << "Количество шагов " << n_steps << "\nКоличество удвоений шага " << doublingStep << "\nКоличество делений шага ";
+            cout << dividingStep << "\nМинимальный шаг " << min_step << "\nМаксимальный шаг " << max_step;
         }
-        else{
+        else {
             cout << setw(5) << "i" << setw(15) << "xn" << setw(15) << "vn" << setw(15) << "hn" << endl;
             for (int i = 0; i < n_steps; i++) {
                 cout << setw(5) << i;
@@ -185,10 +202,12 @@ int main() {
         }
         f2 = f_second_task;
         //Вызываем метод Рунге-Кутта
-        result = runge_kutta_4th_order_for_system(f2, x0, v_10,v_20,A,B, h, n_steps, epsilon, need_epsilon, right_border, epsilon_border, &changes_of_the_step);
+        result = runge_kutta_4th_order_for_system(f2, x0, v_10, v_20, A, B, h, n_steps, epsilon, need_epsilon, right_border, epsilon_border, &changes_of_the_step);
         n_steps = size(result);
         if (f2 == f_second_task && need_epsilon != 0) {
-            cout << setw(5) << "i" << setw(14) << "xn" << setw(14) << "v_1n" << setw(14)<< "v_2n" << setw(14) << "v_12n" << setw(14) << "v_22n" << setw(14) << "v_1n - v_12n" << setw(14) << "v_2n - v_22n" << setw(14) << "S" << setw(14) << "hn" << setw(7) << "c1" << setw(7) << "c2" << endl;
+            doublingStep = changes_of_the_step[n_steps - 1].second; dividingStep = changes_of_the_step[n_steps - 1].first;
+            min_step = 100, max_step = 0;
+            cout << setw(5) << "i" << setw(14) << "xn" << setw(14) << "v_1n" << setw(14) << "v_2n" << setw(14) << "v_12n" << setw(14) << "v_22n" << setw(14) << "v_1n - v_12n" << setw(14) << "v_2n - v_22n" << setw(14) << "S" << setw(14) << "hn" << setw(7) << "c1" << setw(7) << "c2" << endl;
             for (int i = 0; i < n_steps; i++) {
                 cout << setw(5) << i;
                 for (int j = 0; j < result[i].size(); ++j) {
@@ -196,10 +215,14 @@ int main() {
                 }
                 cout << setw(7) << changes_of_the_step[i].first << setw(7) << changes_of_the_step[i].second;
                 cout << endl;
+                if (result[i][8] > max_step) { max_step = result[i][8]; }
+                if (result[i][8] < min_step) { min_step = result[i][8]; }
             }
+            cout << "Количество шагов " << n_steps << "\nКоличество удвоений шага " << doublingStep << "\nКоличество делений шага ";
+            cout << dividingStep << "\nМинимальный шаг " << min_step << "\nМаксимальный шаг " << max_step;
         }
         else {
-            cout << setw(5) << "i" << setw(15) << "xn" << setw(15) << "v_1n" << setw(15)<< "v_2n" << setw(15) << "hn" << endl;
+            cout << setw(5) << "i" << setw(15) << "xn" << setw(15) << "v_1n" << setw(15) << "v_2n" << setw(15) << "hn" << endl;
             for (int i = 0; i < n_steps; i++) {
                 cout << setw(5) << i;
                 for (int j = 0; j < result[i].size(); ++j) {
@@ -210,7 +233,7 @@ int main() {
         }
         break;
     default:
-        cout<<"Вы не правильно ввели номер задачи!";
+        cout << "Вы неправильно ввели номер задачи!";
         break;
     }
 
