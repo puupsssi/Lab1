@@ -94,6 +94,11 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
                 }
             }
             changes_step->push_back({ (*changes_step)[i - 1].first + c1,(*changes_step)[i - 1].second + c2 });//добавили счетчик изменения шага для этого шага 
+            if (right_border - epsilon_border <= xn && xn <= right_border + epsilon_border)   // если мы уже находимся в эпсилон-окрестности правой границы, 
+                // то это была последняя точка и мы завершаем счет  
+            {
+                break;
+            }
             if (xn + hn > right_border + epsilon_border) { //если следующий шаг выводит нас из окрестности, то считаем последнюю точку на границе и завершаем счет
                 i++;
                 hn = right_border - xn;
