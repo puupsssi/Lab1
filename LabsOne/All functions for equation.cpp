@@ -30,14 +30,14 @@ double calculate_S(double vn_plus_1, double v2n, double epsilon) {
 }
 int check_the_point(double vn_plus_1, double v2n, double* h, double epsilon) {
     double S = calculate_S(vn_plus_1, v2n, epsilon);
-    if ((epsilon / 32.0) <= S && S < epsilon) { //хорошая точка
+    if ((epsilon / 32.0) <= S && S <= epsilon) { //хорошая точка
         return 1; //значит, что точка хорошая и мы продолжаем счет
     }
     if (S < (epsilon / 32.0)) {
         *h = *h * 2;
         return 2; //аналогично с предыдущим случаем, только еще поменяли шаг
     }
-    if (S >= epsilon) {//точка плохая, меняем шаг и начинаем той же точки (xn,vn)
+    if (S > epsilon) {//точка плохая, меняем шаг и начинаем той же точки (xn,vn)
         *h = *h / 2.0;
         return 0;
     }
@@ -85,7 +85,11 @@ vector<vector<double>> runge_kutta_4th_order(double(*f)(double, double), double 
                 if (olp) {//если точка хорошая
                     xn = new_point.first;
                     vn = new_point.second;//обновляем точку
-                    vector<double> new_raw = { xn, vn, v2n, (vn - v2n), calculate_S(vn,v2n,epsilon),hn };//наш результат за этот шаг
+                    double h_to_turn = hn;
+                    if (olp == 2) {
+                        h_to_turn /= 2;
+                    }
+                    vector<double> new_raw = { xn, vn, v2n, (vn - v2n), calculate_S(vn,v2n,epsilon),h_to_turn };//наш результат за этот шаг
                     numerical_solution.push_back(new_raw);
                     if (is_task_test) {//для тестовой задачи еще аналитическое решение
                         test_task->push_back({ u_test(xn,v0),abs(u_test(xn,v0) - vn) });

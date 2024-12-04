@@ -130,6 +130,10 @@ int main() {
                 for (int j = 0; j < result[i].size(); ++j) {
                     cout << setw(15) << result[i][j];
                 }
+                if (i > 2) {
+                    cout <<"     " << result[i][4] / result[i - 1][4] << "     ";
+                }
+                else { cout << "            "; }
                 cout << setw(7) << changes_of_the_step[i].first << setw(7) << changes_of_the_step[i].second;
                 cout << endl;
             }
